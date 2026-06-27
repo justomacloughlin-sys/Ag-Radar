@@ -445,7 +445,7 @@
         };
 
         var navItems = [
-          ['dashboard','◈','Executive'],['market','◇','Macro Room'],['grains','◌','Granos'],['inputs','✦','Insumos'],['ndvi','◍','NDVI & Rinde'],['correlation','◎','Correlaciones'],['soil','▧','MAGyP & Suelos'],['hedge','△','Coberturas'],['whatif','▣','What‑If']
+          ['dashboard','◈','Executive'],['help','?','Cómo usar AgRadar'],['market','◇','Macro Room'],['grains','◌','Granos'],['inputs','✦','Insumos'],['ndvi','◍','NDVI & Rinde'],['correlation','◎','Correlaciones'],['soil','▧','MAGyP & Suelos'],['hedge','△','Coberturas'],['whatif','▣','What‑If']
         ];
         function Nav(){return h('aside',{className:'sidebar '+(navOpen?'open':'')},[
           h('div',{className:'brand',key:'b'},[h('div',{className:'logo'}),h('div',null,[h('h1',null,'AgRadar'),h('small',null,'Market · NDVI · Margin')])]),
@@ -475,6 +475,7 @@
               h('div',{className:'panel'},h('div',{className:'panel-inner'},[
                 h('h2',{className:'hero-title'},['AgRadar V3 ',h('span',null,'Decision Room')]),
                 h('p',{className:'lead'},'Plataforma de inteligencia agro para transformar dólar, macro, granos, insumos, clima, NDVI y suelos en decisiones defendibles. Cada recomendación muestra fuente, cálculo, benchmark y confianza.'),
+                h('div',{className:'badge-row',style:{marginBottom:14}},[h(Button,{kind:'primary',onClick:function(){setActive('help');document.getElementById('help')&&document.getElementById('help').scrollIntoView({block:'start'});}},'¿No sabés cómo usar esto? Empezá acá')]),
                 h('div',{className:'quick-grid'},[
                   h(Kpi,{label:'Score insumos',value:two.format(rec.score)+'/10',sub:rec.verdict,badge:h(Badge,{type:rec.score>=6?'live':'fallback'},one.format(rec.confidence)+'% conf.')}),
                   h(Kpi,{label:'Rinde estimado',value:one.format(yieldEst.p50)+' qq/ha',sub:crop+' · '+region,badge:h(Badge,{type:yieldEst.status==='NORMAL'?'live':'fallback'},yieldEst.status)}),
@@ -498,11 +499,30 @@
                 ])
               ]))
             ]),
-            SectionMarket(), SectionGrains(), SectionInputs(), SectionNdvi(), SectionCorrelation(), SectionSoil(), SectionHedge(), SectionWhatif()
+            SectionHelp(), SectionMarket(), SectionGrains(), SectionInputs(), SectionNdvi(), SectionCorrelation(), SectionSoil(), SectionHedge(), SectionWhatif()
           ])
         ]);
 
         function SectionTitle(id,title,desc,badges){ return h('div',{id:id,className:'section'},[h('div',{className:'section-head'},[h('div',null,[h('h2',null,title),h('p',null,desc)]),h('div',{className:'badge-row'},badges||[])])]); }
+        function SectionHelp(){
+          return h(React.Fragment,null,[SectionTitle('help','Cómo usar AgRadar','Guía rápida: qué mirar primero, qué significa cada badge y cómo recorrer las secciones.',[h(Badge,{type:'manual'},'guía'),h(Badge,{type:'live'},'5 min de lectura')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Primeros pasos'), h('ol',{className:'small muted',style:{margin:0,paddingLeft:18,lineHeight:1.7}},[
+                h('li',null,[h('b',null,'Executive (Dashboard): '),'mirá el veredicto operativo y los 4 KPI: score de insumos, rinde estimado, brecha cambiaria y margen what-if. Es el resumen de todo el tablero.']),
+                h('li',null,[h('b',null,'Insumos: '),'cargá tus precios de urea, paridad y maíz en "Inputs trazables" para que el score se recalcule con tus datos reales.']),
+                h('li',null,[h('b',null,'NDVI & Rinde: '),'elegí región, cultivo y etapa, y ajustá NDVI/EVI o usá "Usar ubicación" para tu campo. El rinde estimado se actualiza solo.']),
+                h('li',null,[h('b',null,'What-If: '),'movés precio, retenciones y costos con los controles para ver el margen y la sensibilidad en el gráfico.']),
+                h('li',null,[h('b',null,'Generar Reporte PDF: '),'botón arriba a la derecha. Exporta un resumen con el score, rinde y margen actuales.'])
+              ])]),
+              h(Card,null,[h('h3',null,'Qué significan los badges de estado'), h('div',{className:'source-list'},[
+                h('div',{className:'source-item'},[h('div',null,[h(DataBadge,{status:'LIVE'}),h('span',null,' Dato real obtenido de una API en este momento (dólar, clima).')])]),
+                h('div',{className:'source-item'},[h('div',null,[h(DataBadge,{status:'FALLBACK'}),h('span',null,' La API no respondió: se usa un valor de referencia interno hasta que vuelva a estar disponible.')])]),
+                h('div',{className:'source-item'},[h('div',null,[h(DataBadge,{status:'MANUAL'}),h('span',null,' Vos lo cargaste o es un valor editable en los controles (precios, NDVI, costos).')])]),
+                h('div',{className:'source-item'},[h('div',null,[h(DataBadge,{status:'PENDIENTE'}),h('span',null,' Estructura lista pero requiere una conexión a backend/dataset (MAGyP, Matba-Rofex) para tener histórico real.')])])
+              ]), h('div',{style:{height:12}}), h('p',{className:'small muted'},'Todo lo que ves se recalcula en vivo: cambiar un input en cualquier sección actualiza el score, el rinde y el margen en el resto del tablero.')])
+            ])
+          ]);
+        }
         function SectionMarket(){
           return h(React.Fragment,null,[SectionTitle('market','Macro Room','Variables macro que cambian pricing, financiación, canje y cobertura. No son adornos: cada una tiene lectura agro.',[h(DataBadge,{status:dollars.status}),h(Badge,{type:'fallback'},'macro fallback')]),
             h('div',{className:'grid four'},[

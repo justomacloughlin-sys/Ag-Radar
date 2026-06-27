@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgRadar V3 — Inteligencia de mercados y agronomía</title>
+  <meta name="description" content="AgRadar — plataforma premium de inteligencia de mercados, insumos, NDVI, rinde estimado, macro y cobertura para el agro argentino." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#07090B;
+      --bg2:#0A0E12;
+      --panel:rgba(15,22,29,.72);
+      --panel2:rgba(12,17,23,.88);
+      --glass:rgba(255,255,255,.055);
+      --line:rgba(255,255,255,.105);
+      --line2:rgba(79,224,168,.18);
+      --text:#F3F7F6;
+      --muted:#8D9BA4;
+      --muted2:#B7C3C5;
+      --mint:#4FE0A8;
+      --mint2:#94F7CE;
+      --cyan:#6EE7FF;
+      --amber:#FFD166;
+      --orange:#FF9B54;
+      --red:#FF6B6B;
+      --green:#68F5B3;
+      --blue:#8AB4FF;
+      --violet:#B89CFF;
+      --shadow:0 24px 80px rgba(0,0,0,.44);
+      --radius:24px;
+      --radius2:16px;
+      --sidebar:286px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at 18% -5%, rgba(79,224,168,.18), transparent 32%),
+        radial-gradient(circle at 88% 8%, rgba(110,231,255,.10), transparent 26%),
+        radial-gradient(circle at 50% 115%, rgba(184,156,255,.09), transparent 30%),
+        linear-gradient(180deg,#07090B 0%, #090C10 42%, #050607 100%);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+      background-size:48px 48px;
+      mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.15));
+    }
+    a{color:inherit;text-decoration:none}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{display:flex;min-height:100vh;width:100%}
+    .sidebar{
+      width:var(--sidebar); position:fixed; left:0; top:0; bottom:0; padding:22px 18px;
+      border-right:1px solid var(--line); background:rgba(5,8,10,.64); backdrop-filter:blur(28px); z-index:10;
+      display:flex; flex-direction:column; gap:18px;
+    }
+    .brand{display:flex; align-items:center; gap:12px; padding:8px 10px 16px; border-bottom:1px solid rgba(255,255,255,.075)}
+    .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--mint),#0C6F55);box-shadow:0 0 36px rgba(79,224,168,.23);position:relative;overflow:hidden}
+    .logo:after{content:""; position:absolute; inset:8px; border-radius:50%; border:2px solid rgba(7,9,11,.8); box-shadow:0 0 0 6px rgba(7,9,11,.18)}
+    .brand h1{font-family:"Space Grotesk"; font-size:24px; margin:0; letter-spacing:-.04em; line-height:1}
+    .brand small{display:block; color:var(--muted); font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-top:4px}
+    .nav{display:flex; flex-direction:column; gap:6px; padding:4px}
+    .nav button{
+      border:1px solid transparent; background:transparent; color:var(--muted2); padding:11px 12px; border-radius:14px;
+      display:flex; align-items:center; justify-content:space-between; transition:.22s ease; text-align:left;
+    }
+    .nav button:hover{background:rgba(255,255,255,.055); color:var(--text); border-color:rgba(255,255,255,.08); transform:translateX(2px)}
+    .nav button.active{background:linear-gradient(135deg,rgba(79,224,168,.17),rgba(79,224,168,.045)); color:var(--text); border-color:rgba(79,224,168,.24); box-shadow:inset 0 1px rgba(255,255,255,.07)}
+    .nav .icon{width:22px;display:inline-block;margin-right:10px;opacity:.92}
+    .pill{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:5px 9px; color:var(--muted2); background:rgba(255,255,255,.04); font-size:11px; white-space:nowrap}
+    .pill.live{color:var(--mint2); border-color:rgba(79,224,168,.32); background:rgba(79,224,168,.08)}
+    .pill.fallback{color:var(--amber); border-color:rgba(255,209,102,.32); background:rgba(255,209,102,.07)}
+    .pill.manual{color:var(--blue); border-color:rgba(138,180,255,.3); background:rgba(138,180,255,.07)}
+    .pill.pending{color:#c9a7ff; border-color:rgba(184,156,255,.32); background:rgba(184,156,255,.07)}
+    .sidebar-footer{margin-top:auto; display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025))}
+    .login-row{display:flex; gap:8px; flex-wrap:wrap}
+    .login-btn{flex:1; min-width:92px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.06); color:var(--text); padding:9px 10px; transition:.2s}
+    .login-btn:hover{border-color:rgba(79,224,168,.35); background:rgba(79,224,168,.08)}
+    .main{margin-left:var(--sidebar); width:calc(100% - var(--sidebar)); padding:24px 26px 60px}
+    .topbar{position:sticky; top:0; z-index:8; margin:-24px -26px 22px; padding:18px 26px; background:linear-gradient(180deg,rgba(7,9,11,.92),rgba(7,9,11,.65)); backdrop-filter:blur(24px); border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between; gap:14px}
+    .hero{display:grid; grid-template-columns:minmax(0,1.6fr) minmax(320px,.9fr); gap:18px; margin-bottom:18px}
+    .panel{
+      border:1px solid var(--line); background:linear-gradient(180deg,rgba(255,255,255,.068),rgba(255,255,255,.028));
+      border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter:blur(24px); overflow:hidden; position:relative;
+    }
+    .panel:before{content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 28%,rgba(79,224,168,.03)); opacity:.7}
+    .panel-inner{position:relative; z-index:1; padding:22px}
+    .hero-title{font-family:"Space Grotesk"; font-weight:700; letter-spacing:-.055em; font-size:46px; line-height:.98; margin:0 0 12px}
+    .hero-title span{color:var(--mint); text-shadow:0 0 28px rgba(79,224,168,.22)}
+    .lead{color:var(--muted2); font-size:15px; line-height:1.55; max-width:820px; margin:0 0 20px}
+    .quick-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+    .kpi-card{border:1px solid rgba(255,255,255,.085); background:rgba(6,10,13,.58); border-radius:18px; padding:14px; min-height:94px; transition:.22s}
+    .kpi-card:hover{transform:translateY(-2px); border-color:rgba(79,224,168,.22); background:rgba(8,14,18,.78)}
+    .kpi-label{display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); font-size:12px; margin-bottom:8px}
+    .kpi-value{font-family:"Space Grotesk"; font-size:25px; letter-spacing:-.04em; font-weight:700}
+    .kpi-sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .section{margin:22px 0 8px; scroll-margin-top:90px}
+    .section-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:20px 2px 12px}
+    .section h2{font-family:"Space Grotesk"; font-size:26px; letter-spacing:-.04em; margin:0}
+    .section p{color:var(--muted); margin:6px 0 0; line-height:1.5; font-size:13px}
+    .grid{display:grid; gap:14px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.022)); backdrop-filter:blur(18px); padding:18px; box-shadow:0 16px 50px rgba(0,0,0,.23); position:relative; overflow:hidden}
+    .card.soft{background:rgba(255,255,255,.035)}
+    .card h3{font-family:"Space Grotesk"; font-size:18px; letter-spacing:-.025em; margin:0 0 6px}
+    .card h4{font-size:13px; margin:0 0 8px; color:var(--muted2); letter-spacing:.01em}
+    .muted{color:var(--muted)}
+    .small{font-size:12px; line-height:1.45}
+    .big-num{font-family:"Space Grotesk"; font-size:34px; letter-spacing:-.055em; font-weight:700}
+    .value-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.065)}
+    .value-row:last-child{border-bottom:0}
+    .badge-row{display:flex; gap:7px; flex-wrap:wrap; align-items:center}
+    .btn{border:1px solid var(--line); background:rgba(255,255,255,.055); color:var(--text); padding:10px 13px; border-radius:14px; transition:.22s; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:600}
+    .btn:hover{transform:translateY(-1px); border-color:rgba(79,224,168,.35); background:rgba(79,224,168,.09)}
+    .btn.primary{border-color:rgba(79,224,168,.42); background:linear-gradient(135deg,rgba(79,224,168,.24),rgba(79,224,168,.08)); color:#EFFFF8; box-shadow:0 0 0 1px rgba(79,224,168,.06), 0 18px 42px rgba(79,224,168,.08)}
+    .btn.warn{border-color:rgba(255,209,102,.32); background:rgba(255,209,102,.08)}
+    .control-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:12px}
+    label{display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em; margin:0 0 6px}
+    input,select{width:100%; border:1px solid rgba(255,255,255,.105); background:rgba(5,8,10,.72); color:var(--text); border-radius:13px; padding:11px 12px; outline:none; transition:.2s}
+    input:focus,select:focus{border-color:rgba(79,224,168,.42); box-shadow:0 0 0 4px rgba(79,224,168,.07)}
+    input[type=range]{padding:0; accent-color:var(--mint)}
+    table{width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:16px; border:1px solid rgba(255,255,255,.075)}
+    th,td{padding:12px 12px; border-bottom:1px solid rgba(255,255,255,.065); font-size:13px; vertical-align:top}
+    th{text-align:left; color:var(--muted); background:rgba(255,255,255,.035); font-size:11px; text-transform:uppercase; letter-spacing:.07em}
+    tr:last-child td{border-bottom:0}
+    .sign{display:inline-flex; width:24px; height:24px; border-radius:8px; align-items:center; justify-content:center; font-weight:800; border:1px solid var(--line)}
+    .sign.plus{color:var(--mint); background:rgba(79,224,168,.09); border-color:rgba(79,224,168,.28)}
+    .sign.minus{color:var(--red); background:rgba(255,107,107,.08); border-color:rgba(255,107,107,.26)}
+    .sign.equal{color:var(--amber); background:rgba(255,209,102,.08); border-color:rgba(255,209,102,.24)}
+    .verdict{border-radius:18px; padding:18px; border:1px solid rgba(255,255,255,.10); background:linear-gradient(135deg,rgba(79,224,168,.14),rgba(255,255,255,.025)); position:relative; overflow:hidden}
+    .verdict .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em}
+    .verdict .v{font-family:"Space Grotesk"; font-size:30px; letter-spacing:-.04em; margin:4px 0}
+    .meter{height:11px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.06)}
+    .meter span{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--red),var(--amber),var(--mint)); transition:.35s}
+    .chart-box{height:260px; position:relative}
+    .heatmap{display:grid; gap:6px; overflow:auto; padding-bottom:4px}
+    .heat-row{display:grid; grid-template-columns:110px repeat(8, minmax(54px,1fr)); gap:6px; align-items:center}
+    .heat-cell{height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.07); font-size:12px; color:#fff; position:relative}
+    .heat-label{color:var(--muted2);font-size:12px;white-space:nowrap}
+    .sat-card{min-height:300px; background:radial-gradient(circle at 25% 18%, rgba(79,224,168,.24), transparent 16%),radial-gradient(circle at 70% 35%, rgba(255,209,102,.16), transparent 13%),radial-gradient(circle at 62% 75%, rgba(110,231,255,.16), transparent 16%),linear-gradient(145deg,#102016,#091117); border-radius:20px; border:1px solid rgba(79,224,168,.20); position:relative; overflow:hidden}
+    .sat-card:before{content:"";position:absolute;inset:0;background-image:linear-gradient(35deg,transparent 0 38%,rgba(255,255,255,.08) 39%,transparent 42% 100%),linear-gradient(100deg,rgba(0,0,0,.18),transparent); opacity:.78}
+    .sat-card:after{content:"NDVI / EVI anomaly model"; position:absolute; left:18px; bottom:18px; color:rgba(255,255,255,.72); font-size:12px; letter-spacing:.05em; text-transform:uppercase}
+    .layer-dot{position:absolute; width:12px; height:12px; border-radius:999px; background:var(--mint); box-shadow:0 0 0 8px rgba(79,224,168,.12),0 0 26px rgba(79,224,168,.7)}
+    .dot1{left:28%; top:35%}.dot2{left:54%; top:48%; background:var(--amber); box-shadow:0 0 0 8px rgba(255,209,102,.12),0 0 22px rgba(255,209,102,.6)}.dot3{left:72%; top:66%; background:var(--red); box-shadow:0 0 0 8px rgba(255,107,107,.11),0 0 22px rgba(255,107,107,.55)}
+    .explain{border:1px solid rgba(79,224,168,.17); background:rgba(79,224,168,.045); border-radius:16px; padding:13px; color:var(--muted2); line-height:1.5}
+    details{border:1px solid rgba(255,255,255,.085); background:rgba(255,255,255,.033); border-radius:16px; padding:12px 14px; color:var(--muted2)}
+    summary{cursor:pointer; color:var(--text); font-weight:700; font-size:13px}
+    .source-list{display:flex; flex-direction:column; gap:8px; max-height:320px; overflow:auto; padding-right:4px}
+    .source-item{display:flex; justify-content:space-between; gap:12px; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:10px; background:rgba(255,255,255,.03)}
+    .source-item b{font-size:12px}.source-item span{font-size:11px;color:var(--muted)}
+    .toast{position:fixed; right:22px; bottom:22px; background:rgba(9,14,18,.94); border:1px solid rgba(79,224,168,.3); box-shadow:var(--shadow); border-radius:18px; padding:14px 16px; z-index:99; display:none; max-width:360px}
+    .toast.show{display:block; animation:pop .25s ease}
+    @keyframes pop{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .skeleton{position:relative; overflow:hidden; background:rgba(255,255,255,.055); border-radius:12px}
+    .skeleton:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);animation:shimmer 1.4s infinite}
+    @keyframes shimmer{100%{transform:translateX(100%)}}
+    .mobile-toggle{display:none}
+    .print-report{display:none}
+    @media(max-width:1100px){
+      .hero,.grid.two,.grid.three,.grid.four{grid-template-columns:1fr}
+      .quick-grid,.control-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .chart-box{height:220px}
+    }
+    @media(max-width:760px){
+      .sidebar{transform:translateX(-101%); transition:.25s; width:286px}
+      .sidebar.open{transform:translateX(0)}
+      .main{margin-left:0; width:100%; padding:20px 14px 50px}
+      .topbar{margin:-20px -14px 18px; padding:14px}
+      .hero-title{font-size:36px}
+      .quick-grid,.control-grid{grid-template-columns:1fr}
+      .mobile-toggle{display:inline-flex}
+      .heat-row{grid-template-columns:88px repeat(8, 54px)}
+    }
+    @media print{
+      body{background:#fff;color:#111}.sidebar,.topbar,.btn,.nav{display:none!important}.main{margin:0;width:100%;padding:0}.panel,.card{box-shadow:none;background:#fff;color:#111;border-color:#ddd}.muted,.small{color:#333}.print-report{display:block}.no-print{display:none!important}
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#07090B;color:#F3F7F6;font-family:Inter,system-ui">
+      <div style="max-width:620px;border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:26px;background:rgba(255,255,255,.05);box-shadow:0 24px 80px rgba(0,0,0,.44)">
+        <div style="font-family:Space Grotesk;font-size:30px;font-weight:700;letter-spacing:-.04em">AgRadar V3 está cargando…</div>
+        <p style="color:#8D9BA4;line-height:1.55">Si esta pantalla no cambia, el navegador no pudo cargar React/Chart.js desde CDN. Subilo a GitHub Pages y abrilo por HTTPS; no lo pruebes como archivo local.</p>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script>
+    (function(){
+      if(!window.React || !window.ReactDOM){
+        document.getElementById('root').innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;background:#07090B;color:white;font-family:Inter,system-ui;padding:24px"><div style="max-width:680px;border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:26px;background:rgba(255,255,255,.06)"><h1>AgRadar no pudo iniciar</h1><p style="color:#AAB6BB">No cargó React desde CDN. Probá abrirlo desde GitHub Pages por HTTPS o desactivar bloqueadores de contenido.</p></div></div>';
+        return;
+      }
+      var h = React.createElement;
+      var useState = React.useState, useEffect = React.useEffect, useMemo = React.useMemo, useRef = React.useRef;
+      var money = new Intl.NumberFormat('es-AR',{maximumFractionDigits:0});
+      var one = new Intl.NumberFormat('es-AR',{maximumFractionDigits:1,minimumFractionDigits:1});
+      var two = new Intl.NumberFormat('es-AR',{maximumFractionDigits:2,minimumFractionDigits:2});
+      var pct = function(n){ return (n>=0?'+':'') + one.format(n) + '%'; };
+      var clamp = function(n,a,b){ return Math.max(a, Math.min(b,n)); };
+      var nowLabel = function(){ return new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}); };
+      var safeJson = function(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) || fallback; }catch(e){ return fallback; } };
+      var store = function(key,val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} };
+      var toast = function(msg){ var el=document.getElementById('toast'); el.innerHTML=msg; el.className='toast show'; setTimeout(function(){el.className='toast'},3800); };
+      var Badge = function(props){ return h('span',{className:'pill '+(props.type||'')},props.children); };
+      var Button = function(props){ return h('button',{className:'btn '+(props.kind||''), onClick:props.onClick, type:'button'},props.children); };
+      var Card = function(props){ return h('div',{className:'card '+(props.className||'')},props.children); };
+      var Kpi = function(p){ return h('div',{className:'kpi-card'},[
+        h('div',{className:'kpi-label',key:'l'},[h('span',null,p.label),p.badge||null]),
+        h('div',{className:'kpi-value',key:'v'},p.value),
+        h('div',{className:'kpi-sub',key:'s'},p.sub)
+      ]); };
+      var DataBadge = function(p){ return h(Badge,{type:p.status==='LIVE'?'live':p.status==='FALLBACK'?'fallback':p.status==='MANUAL'?'manual':'pending'},p.status); };
+
+      var FALLBACK = {
+        dollars:{oficial:1185, blue:1245, mep:1232, ccl:1260, source:'Fallback interno', status:'FALLBACK', updated:nowLabel()},
+        macro:{risk:680,dxy:98.7,us10y:4.28,inflation:2.1,pesoRate:38.0,caucion:34.0,wti:65.4,retMaiz:12,retSoja:33,retTrigo:9,status:'FALLBACK',updated:nowLabel()},
+        grains:[
+          {crop:'Maíz disponible', price:178, future:184, basis:-6, unit:'USD/t', source:'Manual / estructura BCR', status:'MANUAL'},
+          {crop:'Soja disponible', price:302, future:310, basis:-8, unit:'USD/t', source:'Manual / estructura BCR', status:'MANUAL'},
+          {crop:'Trigo disponible', price:198, future:205, basis:-7, unit:'USD/t', source:'Manual / estructura BCR', status:'MANUAL'}
+        ],
+        inputs:{urea:580, ureaSource:'IF / San Nicolás - manual', parity:545, corn:178, histRatio:2.75, trend:'alcista', supply:'ajustado'},
+        weather:{temp:18.2, rain7:14, rain30:42, soil1:0.18, soil3:0.20, soil9:0.22, status:'FALLBACK', updated:nowLabel()}
+      };
+
+      var THRESHOLDS = {
+        'Maíz':{
+          'Emergencia':{base:[0.18,0.32], evi:[0.10,0.22]}, 'Vegetativo':{base:[0.58,0.78], evi:[0.35,0.55]}, 'Floración':{base:[0.72,0.88], evi:[0.48,0.68]}, 'Llenado':{base:[0.62,0.82], evi:[0.38,0.58]}
+        },
+        'Soja':{
+          'Emergencia':{base:[0.16,0.30], evi:[0.09,0.20]}, 'Vegetativo':{base:[0.55,0.76], evi:[0.34,0.53]}, 'Floración':{base:[0.68,0.86], evi:[0.45,0.65]}, 'Llenado':{base:[0.58,0.80], evi:[0.35,0.56]}
+        },
+        'Trigo':{
+          'Emergencia':{base:[0.14,0.28], evi:[0.08,0.18]}, 'Macollaje':{base:[0.50,0.70], evi:[0.28,0.48]}, 'Encañazón':{base:[0.62,0.82], evi:[0.38,0.58]}, 'Llenado':{base:[0.48,0.70], evi:[0.26,0.46]}
+        }
+      };
+      var regionAdj = {'Pampas Norte':0.01,'Pampas Sur':-0.025,'Córdoba':0,'Santa Fe':0.008,'Oeste Bs As':-0.015,'NOA/NEA':-0.02};
+      var baseYield = {
+        'Córdoba':{'Maíz':86,'Soja':32,'Trigo':38}, 'Santa Fe':{'Maíz':92,'Soja':35,'Trigo':40}, 'Pampas Norte':{'Maíz':90,'Soja':34,'Trigo':39}, 'Pampas Sur':{'Maíz':66,'Soja':28,'Trigo':34}, 'Oeste Bs As':{'Maíz':74,'Soja':30,'Trigo':36}, 'NOA/NEA':{'Maíz':63,'Soja':27,'Trigo':26}
+      };
+      var departments = {
+        'Córdoba':['Río Cuarto','Marcos Juárez','Unión','Tercero Arriba','General Roca'],
+        'Santa Fe':['Caseros','General López','Las Colonias','San Justo','Castellanos'],
+        'Pampas Norte':['Pergamino','Rojas','Junín','Colón','San Nicolás'],
+        'Pampas Sur':['Tandil','Azul','Tres Arroyos','Balcarce','Necochea'],
+        'Oeste Bs As':['Pehuajó','Trenque Lauquen','9 de Julio','Carlos Tejedor','Bolívar'],
+        'NOA/NEA':['Anta','Charata','Saenz Peña','Metán','Reconquista']
+      };
+      var soilProfiles = {
+        'Córdoba':{mo:2.5,ph:6.5,fert:'Media-Alta',limit:'Nitrógeno y agua útil en perfiles someros'},
+        'Santa Fe':{mo:2.8,ph:6.4,fert:'Alta',limit:'Napa/escurrimiento según subzona'},
+        'Pampas Norte':{mo:3.1,ph:6.6,fert:'Alta',limit:'Compactación y fósforo en lotes intensivos'},
+        'Pampas Sur':{mo:2.7,ph:6.7,fert:'Media',limit:'Temperatura y agua en floración'},
+        'Oeste Bs As':{mo:2.2,ph:6.8,fert:'Media',limit:'Agua útil y tosca'},
+        'NOA/NEA':{mo:1.8,ph:6.2,fert:'Variable',limit:'Estrés térmico y distribución de lluvias'}
+      };
+
+      function recommend(inputs, dollars, macro){
+        var urea = Number(inputs.urea)||0, parity=Number(inputs.parity)||0, corn=Number(inputs.corn)||0, hist=Number(inputs.histRatio)||1;
+        var parityGap = parity ? ((urea-parity)/parity)*100 : 0;
+        var ratio = corn ? urea/corn : 0;
+        var ratioGap = hist ? ((ratio-hist)/hist)*100 : 0;
+        var fxGap = dollars.oficial ? ((dollars.ccl-dollars.oficial)/dollars.oficial)*100 : 0;
+        var factors = [];
+        function factor(name, weight, sign, current, bench, why){
+          var value = sign==='+' ? weight : sign==='-' ? -weight : 0;
+          factors.push({name:name, weight:weight, sign:sign, current:current, bench:bench, impact:value, why:why});
+        }
+        factor('Brecha de paridad importación',1.4,
+          parityGap<=-3?'+':parityGap>=5?'-':'=',
+          'Urea local '+money.format(urea)+' USD/t vs paridad '+money.format(parity)+' USD/t',
+          pct(parityGap)+' vs paridad',
+          parityGap<=-3?'El precio local está debajo de la reposición importada: riesgo de suba si se normaliza la paridad.':parityGap>=5?'El precio local está por arriba de la paridad: no hay urgencia económica salvo riesgo de disponibilidad.':'El precio local está cerca de paridad: señal neutra.'
+        );
+        factor('Relación insumo/grano histórica',1.3,
+          ratioGap<=-5?'+':ratioGap>=10?'-':'=',
+          two.format(ratio)+' t maíz / t urea',
+          'Histórico '+two.format(hist)+' · desvío '+pct(ratioGap),
+          ratioGap<=-5?'La urea está barata contra maíz respecto de la historia: favorece fijar insumo.':ratioGap>=10?'La urea está cara contra maíz: comprar todo hoy destruye margen relativo.':'La relación está cerca de su zona normal.'
+        );
+        var trendSign = inputs.trend==='alcista'?'+':inputs.trend==='bajista'?'-':'=';
+        factor('Tendencia internacional',0.85,trendSign,
+          inputs.trend==='alcista'?'Urea/energía con sesgo alcista':inputs.trend==='bajista'?'Urea/energía con sesgo bajista':'Sin tendencia clara',
+          'Peso 0.8–0.9',
+          trendSign==='+'?'Si la tendencia externa sube, esperar aumenta el riesgo de reposición.':trendSign==='-'?'Si la tendencia externa baja, conviene escalonar y no apurarse.':'No define la decisión.'
+        );
+        var sdSign = inputs.supply==='ajustado'?'+':inputs.supply==='holgado'?'-':'=';
+        factor('Oferta / demanda local',0.9,sdSign,
+          inputs.supply==='ajustado'?'Mercado local ajustado':inputs.supply==='holgado'?'Oferta cómoda':'Oferta normal',
+          'Lectura comercial',
+          sdSign==='+'?'Riesgo de disponibilidad/precio por demanda o logística.':sdSign==='-'?'No hay presión de abastecimiento; permite esperar mejores niveles.':'No suma ni resta fuerte.'
+        );
+        var favorable = factors.filter(function(f){return f.sign==='+'}).length;
+        var negative = factors.filter(function(f){return f.sign==='-'}).length;
+        var bonus = favorable>=2 ? 0.6 : 0;
+        var penalty = negative>=2 ? -0.35 : 0;
+        var macroAdj = fxGap>12 ? 0.25 : fxGap<5 ? -0.15 : 0;
+        var raw = 5 + factors.reduce(function(a,b){return a+b.impact},0) + bonus + penalty + macroAdj;
+        var score = clamp(raw,0,10);
+        var verdict = score>=7.4?'ABASTECERSE YA':score>=6.1?'COMPRA SELECTIVA':score>=4.8?'NEUTRAL':score>=3.2?'SOLO LO INDISPENSABLE':'ESPERAR';
+        var color = score>=7.4?'var(--mint)':score>=6.1?'var(--green)':score>=4.8?'var(--amber)':score>=3.2?'var(--orange)':'var(--red)';
+        var confidence = clamp(62 + favorable*6 - Math.abs(negative-favorable)*3 + (dollars.status==='LIVE'?8:0),45,88);
+        return {score:score, verdict:verdict, color:color, factors:factors, bonus:bonus, penalty:penalty, macroAdj:macroAdj, parityGap:parityGap, ratio:ratio, ratioGap:ratioGap, fxGap:fxGap, confidence:confidence};
+      }
+
+      function estimateYield(ndvi,evi,crop,stage,region,weather,soilMo,ret){
+        var t = THRESHOLDS[crop][stage] || Object.values(THRESHOLDS[crop])[0];
+        var adj = regionAdj[region] || 0;
+        var low = t.base[0]+adj, high = t.base[1]+adj, mid = (low+high)/2;
+        var eLow=t.evi[0]+adj*.7, eHigh=t.evi[1]+adj*.7, eMid=(eLow+eHigh)/2;
+        var ndviAnom = ((ndvi-mid)/mid)*100;
+        var eviAnom = ((evi-eMid)/eMid)*100;
+        var soilScore = clamp((weather.soil9 || 0.2) / 0.24, .65, 1.18);
+        var rainScore = clamp((weather.rain30 || 40) / 55, .65, 1.25);
+        var soilProfile = soilProfiles[region] || soilProfiles['Córdoba'];
+        var moAdj = (soilMo - soilProfile.mo) * 0.015;
+        var waterAdj = ((soilScore-1)*0.16) + ((rainScore-1)*0.10);
+        var satAdj = (ndviAnom*0.0075) + (eviAnom*0.004);
+        var b = baseYield[region][crop] || 60;
+        var p50 = clamp(b * (1 + satAdj + waterAdj + moAdj - (ret/100)*0.04), b*.55, b*1.25);
+        var uncertainty = 0.10 + Math.max(0, Math.abs(ndviAnom)/100)*0.09 + (weather.status==='LIVE'?0:0.05);
+        return {low:low,high:high,mid:mid,eLow:eLow,eHigh:eHigh,ndviAnom:ndviAnom,eviAnom:eviAnom,soilScore:soilScore,rainScore:rainScore,p50:p50,p10:p50*(1-uncertainty),p90:p50*(1+uncertainty),uncertainty:uncertainty, soil:soilProfile,
+          status: ndvi<low?'ANOMALÍA NEGATIVA':ndvi>high?'ANOMALÍA POSITIVA':'NORMAL',
+          main: ndvi<low?'La cobertura/actividad vegetal está por debajo del umbral esperado para cultivo-etapa-región.':ndvi>high?'La señal satelital supera el rango normal; buen vigor o posible efecto de fecha/variedad.':'El índice está dentro del rango normal esperado.'};
+      }
+
+      function ChartCard(props){
+        var ref = useRef(null), chart = useRef(null);
+        useEffect(function(){
+          if(!window.Chart || !ref.current) return;
+          if(chart.current) chart.current.destroy();
+          chart.current = new Chart(ref.current, {type:props.type||'line', data:props.data, options:props.options||{responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#B7C3C5'}}}, scales:{x:{ticks:{color:'#8D9BA4'},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#8D9BA4'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+          return function(){ if(chart.current) chart.current.destroy(); };
+        }, [JSON.stringify(props.data)]);
+        return h('div',{className:'chart-box'}, h('canvas',{ref:ref}));
+      }
+
+      function App(){
+        var saved = safeJson('agradar_v3_prefs',{});
+        var [active,setActive] = useState('dashboard');
+        var [navOpen,setNavOpen] = useState(false);
+        var [user,setUser] = useState(saved.user||null);
+        var [coords,setCoords] = useState(saved.coords || {lat:-33.13, lon:-64.35, label:'Río Cuarto, Córdoba'});
+        var [dollars,setDollars] = useState(FALLBACK.dollars);
+        var [macro,setMacro] = useState(FALLBACK.macro);
+        var [weather,setWeather] = useState(FALLBACK.weather);
+        var [grains,setGrains] = useState(FALLBACK.grains);
+        var [inputs,setInputs] = useState(saved.inputs || FALLBACK.inputs);
+        var [crop,setCrop] = useState(saved.crop || 'Maíz');
+        var [region,setRegion] = useState(saved.region || 'Córdoba');
+        var stages = Object.keys(THRESHOLDS[crop]);
+        var [stage,setStage] = useState(saved.stage || stages[1]);
+        var [department,setDepartment] = useState(saved.department || 'Río Cuarto');
+        var [ndvi,setNdvi] = useState(saved.ndvi || 0.71);
+        var [evi,setEvi] = useState(saved.evi || 0.46);
+        var [soilMo,setSoilMo] = useState(saved.soilMo || 2.5);
+        var [priceScenario,setPriceScenario] = useState(saved.priceScenario || 178);
+        var [retention,setRetention] = useState(saved.retention || 12);
+        var [seedCost,setSeedCost] = useState(saved.seedCost || 150);
+        var [fertCost,setFertCost] = useState(saved.fertCost || 190);
+        var [otherCost,setOtherCost] = useState(saved.otherCost || 460);
+        var rec = useMemo(function(){return recommend(inputs,dollars,macro)},[inputs,dollars,macro]);
+        var yieldEst = useMemo(function(){return estimateYield(Number(ndvi),Number(evi),crop,stage,region,weather,Number(soilMo),Number(retention));},[ndvi,evi,crop,stage,region,weather,soilMo,retention]);
+        var margin = useMemo(function(){
+          var yieldT = yieldEst.p50/10;
+          var gross = yieldT * Number(priceScenario) * (1-Number(retention)/100);
+          var costs = Number(seedCost)+Number(fertCost)+Number(otherCost);
+          return {gross:gross,costs:costs,margin:gross-costs,breakeven: costs / Math.max(0.1,(Number(priceScenario)*(1-Number(retention)/100))) * 10};
+        },[yieldEst,priceScenario,retention,seedCost,fertCost,otherCost]);
+
+        useEffect(function(){
+          store('agradar_v3_prefs',{user:user,coords:coords,inputs:inputs,crop:crop,region:region,stage:stage,department:department,ndvi:ndvi,evi:evi,soilMo:soilMo,priceScenario:priceScenario,retention:retention,seedCost:seedCost,fertCost:fertCost,otherCost:otherCost});
+        },[user,coords,inputs,crop,region,stage,department,ndvi,evi,soilMo,priceScenario,retention,seedCost,fertCost,otherCost]);
+
+        useEffect(function(){
+          fetch('https://dolarapi.com/v1/dolares').then(function(r){return r.json()}).then(function(list){
+            var get=function(k){var x=list.find(function(d){return String(d.casa).toLowerCase()===k}); return x ? Number(x.venta||x.compra) : null};
+            var data={oficial:get('oficial')||FALLBACK.dollars.oficial,blue:get('blue')||FALLBACK.dollars.blue,mep:get('bolsa')||FALLBACK.dollars.mep,ccl:get('contadoconliqui')||FALLBACK.dollars.ccl,source:'DolarAPI',status:'LIVE',updated:nowLabel()};
+            setDollars(data);
+          }).catch(function(){ setDollars(FALLBACK.dollars); });
+        },[]);
+        useEffect(function(){
+          var url='https://api.open-meteo.com/v1/forecast?latitude='+coords.lat+'&longitude='+coords.lon+'&current=temperature_2m,precipitation&hourly=soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm&daily=precipitation_sum&past_days=30&forecast_days=7&timezone=auto';
+          fetch(url).then(function(r){return r.json()}).then(function(j){
+            var sm0=(j.hourly&&j.hourly.soil_moisture_0_to_1cm)||[];
+            var sm1=(j.hourly&&j.hourly.soil_moisture_1_to_3cm)||[];
+            var sm3=(j.hourly&&j.hourly.soil_moisture_3_to_9cm)||[];
+            var daily=(j.daily&&j.daily.precipitation_sum)||[];
+            var avg=function(arr,n){var s=arr.slice(-n).filter(function(x){return typeof x==='number'}); return s.length?s.reduce(function(a,b){return a+b},0)/s.length:0};
+            var sum=function(arr,n){return arr.slice(-n).reduce(function(a,b){return a+(Number(b)||0)},0)};
+            setWeather({temp:j.current?j.current.temperature_2m:FALLBACK.weather.temp,rain7:sum(daily,7),rain30:sum(daily,30),soil1:avg(sm0,24),soil3:avg(sm1,24),soil9:avg(sm3,24),status:'LIVE',updated:nowLabel()});
+          }).catch(function(){setWeather(FALLBACK.weather)});
+        },[coords.lat,coords.lon]);
+
+        useEffect(function(){ if(!THRESHOLDS[crop][stage]) setStage(Object.keys(THRESHOLDS[crop])[1]||Object.keys(THRESHOLDS[crop])[0]); },[crop]);
+        useEffect(function(){ setDepartment((departments[region]||[])[0] || ''); },[region]);
+
+        var setInput = function(key,val){ setInputs(Object.assign({},inputs, {[key]:val})); };
+        var setGeo = function(){
+          if(!navigator.geolocation){ toast('Geolocalización no disponible. Podés cargar coordenadas manuales.'); return; }
+          navigator.geolocation.getCurrentPosition(function(pos){ setCoords({lat:+pos.coords.latitude.toFixed(4), lon:+pos.coords.longitude.toFixed(4), label:'Ubicación guardada'}); toast('Ubicación del campo guardada para AgRadar.'); }, function(){ toast('No se pudo tomar ubicación. Revisá permisos del navegador.'); });
+        };
+        var printPdf = function(){
+          var jsPDF = window.jspdf && window.jspdf.jsPDF;
+          if(jsPDF){
+            var doc = new jsPDF();
+            doc.setFontSize(18); doc.text('AgRadar — Reporte Ejecutivo', 14, 18);
+            doc.setFontSize(10); doc.text('Generado: '+nowLabel(),14,26);
+            doc.setFontSize(12); doc.text('1. Scoring insumos',14,40);
+            doc.text('Score: '+two.format(rec.score)+'/10 · '+rec.verdict+' · Confianza '+one.format(rec.confidence)+'%',14,48);
+            doc.text('Relación urea/maíz: '+two.format(rec.ratio)+' t/t · Desvío histórico '+pct(rec.ratioGap),14,56);
+            doc.text('Paridad importación: '+pct(rec.parityGap)+' · Brecha CCL/oficial: '+pct(rec.fxGap),14,64);
+            doc.text('2. NDVI / Rinde',14,78);
+            doc.text(crop+' '+stage+' · '+region+' / '+department,14,86);
+            doc.text('NDVI '+two.format(ndvi)+' · Anomalía '+pct(yieldEst.ndviAnom)+' · Rinde P50 '+one.format(yieldEst.p50)+' qq/ha',14,94);
+            doc.text('3. What-if margen',14,108);
+            doc.text('Margen estimado: '+money.format(margin.margin)+' USD/ha · Rinde equilibrio '+one.format(margin.breakeven)+' qq/ha',14,116);
+            doc.text('Notas: datos LIVE/FALLBACK/MANUAL están identificados en la app. MAGyP/BCR/Matba históricos requieren backend para trazabilidad productiva.',14,132,{maxWidth:180});
+            doc.save('AgRadar_reporte.pdf');
+          } else window.print();
+        };
+        var openNasa = function(){
+          var url='https://worldview.earthdata.nasa.gov/?v='+(coords.lon-1)+','+(coords.lat-1)+','+(coords.lon+1)+','+(coords.lat+1)+'&l=MODIS_Terra_CorrectedReflectance_TrueColor,Reference_Labels_15m(hidden),Reference_Features_15m(hidden)&lg=true&t='+new Date().toISOString().slice(0,10);
+          window.open(url,'_blank');
+        };
+
+        var navItems = [
+          ['dashboard','◈','Executive'],['market','◇','Macro Room'],['grains','◌','Granos'],['inputs','✦','Insumos'],['ndvi','◍','NDVI & Rinde'],['correlation','◎','Correlaciones'],['soil','▧','MAGyP & Suelos'],['hedge','△','Coberturas'],['whatif','▣','What‑If']
+        ];
+        function Nav(){return h('aside',{className:'sidebar '+(navOpen?'open':'')},[
+          h('div',{className:'brand',key:'b'},[h('div',{className:'logo'}),h('div',null,[h('h1',null,'AgRadar'),h('small',null,'Market · NDVI · Margin')])]),
+          h('div',{className:'nav',key:'n'},navItems.map(function(n){return h('button',{key:n[0],className:active===n[0]?'active':'',onClick:function(){setActive(n[0]);setNavOpen(false); setTimeout(function(){document.getElementById(n[0])&&document.getElementById(n[0]).scrollIntoView({block:'start'});},40);}},[h('span',null,[h('span',{className:'icon'},n[1]),n[2]]), active===n[0]?h('span',{className:'pill live'},'ON'):null]);})),
+          h('div',{className:'sidebar-footer',key:'f'},[
+            h('div',{className:'small muted'}, user?'Sesión simulada activa · preferencias guardadas':'Login simulado para guardar campo, inputs y preferencias.'),
+            h('div',{className:'login-row'},[
+              h('button',{className:'login-btn',onClick:function(){setUser({provider:'Google',name:'Productor Demo'});toast('Login Google simulado: preferencias guardadas.');}},'Google'),
+              h('button',{className:'login-btn',onClick:function(){setUser({provider:'Apple',name:'Productor Demo'});toast('Login Apple simulado: preferencias guardadas.');}},'Apple')
+            ]),
+            user?h('div',{className:'badge-row'},[h(Badge,{type:'live'},user.provider),h(Badge,{type:'manual'},coords.label)]):null
+          ])
+        ]);}
+
+        var priceLine = {labels:['Ene','Feb','Mar','Abr','May','Jun','Hoy','Sep','Dic'],datasets:[{label:'Maíz USD/t',data:[169,172,176,171,174,178,Number(inputs.corn),181,184],borderColor:'#4FE0A8',backgroundColor:'rgba(79,224,168,.12)',tension:.35,fill:true},{label:'Urea/Maíz t/t',data:[2.8,2.9,3.05,3.1,3.25,3.18,rec.ratio,3.0,2.9],borderColor:'#FFD166',backgroundColor:'rgba(255,209,102,.05)',tension:.35,yAxisID:'y1'}]};
+        var marginChart = {labels:['Precio -10%','Precio base','Precio +10%','Rinde -10%','Rinde base','Rinde +10%','Ret +5 pp'],datasets:[{label:'Margen USD/ha',data:[margin.margin-(priceScenario*.1*(yieldEst.p50/10)),margin.margin,margin.margin+(priceScenario*.1*(yieldEst.p50/10)),margin.margin-(yieldEst.p50/10*.1*priceScenario),margin.margin,margin.margin+(yieldEst.p50/10*.1*priceScenario),margin.margin-(priceScenario*(yieldEst.p50/10)*.05)],backgroundColor:'rgba(79,224,168,.45)',borderColor:'rgba(79,224,168,.9)',borderWidth:1}]};
+        var yieldChart = {labels:['P10','P50','P90','Base zonal'],datasets:[{label:'Rinde qq/ha',data:[yieldEst.p10,yieldEst.p50,yieldEst.p90,baseYield[region][crop]],backgroundColor:['rgba(255,107,107,.45)','rgba(79,224,168,.5)','rgba(110,231,255,.45)','rgba(255,255,255,.18)'],borderColor:['#FF6B6B','#4FE0A8','#6EE7FF','rgba(255,255,255,.4)'],borderWidth:1}]};
+
+        return h('div',{className:'app'},[
+          h(Nav,{key:'nav'}),
+          h('main',{className:'main',key:'main'},[
+            h('div',{className:'topbar'},[
+              h('div',{className:'badge-row'},[h(Button,{kind:'mobile-toggle',onClick:function(){setNavOpen(true)}},'☰'), h(Badge,{type:'live'},'React CDN'), h(Badge,{type:'live'},'Chart.js'), h(Badge,{type:'pending'},'Babel Standalone cargado'), h(DataBadge,{status:dollars.status}), h(DataBadge,{status:weather.status})]),
+              h('div',{className:'badge-row'},[h(Button,{onClick:setGeo},'📍 Guardar campo'),h(Button,{kind:'primary',onClick:printPdf},'Generar Reporte PDF')])
+            ]),
+            h('section',{id:'dashboard',className:'hero section'},[
+              h('div',{className:'panel'},h('div',{className:'panel-inner'},[
+                h('h2',{className:'hero-title'},['AgRadar V3 ',h('span',null,'Decision Room')]),
+                h('p',{className:'lead'},'Plataforma de inteligencia agro para transformar dólar, macro, granos, insumos, clima, NDVI y suelos en decisiones defendibles. Cada recomendación muestra fuente, cálculo, benchmark y confianza.'),
+                h('div',{className:'quick-grid'},[
+                  h(Kpi,{label:'Score insumos',value:two.format(rec.score)+'/10',sub:rec.verdict,badge:h(Badge,{type:rec.score>=6?'live':'fallback'},one.format(rec.confidence)+'% conf.')}),
+                  h(Kpi,{label:'Rinde estimado',value:one.format(yieldEst.p50)+' qq/ha',sub:crop+' · '+region,badge:h(Badge,{type:yieldEst.status==='NORMAL'?'live':'fallback'},yieldEst.status)}),
+                  h(Kpi,{label:'Brecha CCL/Oficial',value:pct(rec.fxGap),sub:'Macro agro / pricing',badge:h(DataBadge,{status:dollars.status})}),
+                  h(Kpi,{label:'Margen What‑If',value:money.format(margin.margin)+' USD/ha',sub:'Rinde equilibrio '+one.format(margin.breakeven)+' qq/ha',badge:h(Badge,{type:margin.margin>0?'live':'fallback'},margin.margin>0?'positivo':'riesgo')})
+                ])
+              ])),
+              h('div',{className:'panel'},h('div',{className:'panel-inner'},[
+                h('div',{className:'verdict'},[
+                  h('div',{className:'label'},'Veredicto operativo'),
+                  h('div',{className:'v',style:{color:rec.color}},rec.verdict),
+                  h('div',{className:'meter'},h('span',{style:{width:(rec.score*10)+'%'}})),
+                  h('p',{className:'small muted'},'No es una orden automática: es una señal ponderada por paridad, relación histórica, tendencia internacional y oferta/demanda. Macro ajusta riesgo, no reemplaza el cálculo.')
+                ]),
+                h('div',{style:{height:12}}),
+                h('div',{className:'source-list'},[
+                  h('div',{className:'source-item'},[h('div',null,[h('b',null,'Dólar'),h('span',null,dollars.source+' · '+dollars.updated)]),h(DataBadge,{status:dollars.status})]),
+                  h('div',{className:'source-item'},[h('div',null,[h('b',null,'Clima / suelo'),h('span',null,'Open‑Meteo · '+weather.updated)]),h(DataBadge,{status:weather.status})]),
+                  h('div',{className:'source-item'},[h('div',null,[h('b',null,'NDVI / EVI'),h('span',null,'Powered by NASA · modelo editable')]),h(Badge,{type:'manual'},'MANUAL + NASA')]),
+                  h('div',{className:'source-item'},[h('div',null,[h('b',null,'Granos / MAGyP'),h('span',null,'Estructura lista; backend recomendado para histórico')]),h(Badge,{type:'pending'},'PENDIENTE API')])
+                ])
+              ]))
+            ]),
+            SectionMarket(), SectionGrains(), SectionInputs(), SectionNdvi(), SectionCorrelation(), SectionSoil(), SectionHedge(), SectionWhatif()
+          ])
+        ]);
+
+        function SectionTitle(id,title,desc,badges){ return h('div',{id:id,className:'section'},[h('div',{className:'section-head'},[h('div',null,[h('h2',null,title),h('p',null,desc)]),h('div',{className:'badge-row'},badges||[])])]); }
+        function SectionMarket(){
+          return h(React.Fragment,null,[SectionTitle('market','Macro Room','Variables macro que cambian pricing, financiación, canje y cobertura. No son adornos: cada una tiene lectura agro.',[h(DataBadge,{status:dollars.status}),h(Badge,{type:'fallback'},'macro fallback')]),
+            h('div',{className:'grid four'},[
+              h(Kpi,{label:'Dólar oficial',value:'$ '+money.format(dollars.oficial),sub:dollars.source,badge:h(DataBadge,{status:dollars.status})}),
+              h(Kpi,{label:'Dólar blue',value:'$ '+money.format(dollars.blue),sub:'Brecha oficial '+pct((dollars.blue-dollars.oficial)/dollars.oficial*100),badge:h(DataBadge,{status:dollars.status})}),
+              h(Kpi,{label:'MEP / Bolsa',value:'$ '+money.format(dollars.mep),sub:'Referencia cobertura financiera',badge:h(DataBadge,{status:dollars.status})}),
+              h(Kpi,{label:'CCL',value:'$ '+money.format(dollars.ccl),sub:'Brecha oficial '+pct(rec.fxGap),badge:h(DataBadge,{status:dollars.status})})
+            ]),
+            h('div',{className:'grid two',style:{marginTop:14}},[
+              h(Card,null,[h('h3',null,'Mapa macro agro'), h('table',null,[h('thead',null,h('tr',null,['Variable','Dato','Lectura agro','Status'].map(function(x){return h('th',null,x)}))), h('tbody',null,[
+                ['Riesgo país',money.format(macro.risk)+' pb','Sube costo USD y riesgo de financiamiento largo','FALLBACK'],
+                ['DXY',one.format(macro.dxy),'Dólar global fuerte presiona commodities; débil suele aliviar precios agrícolas','FALLBACK'],
+                ['UST 10Y',one.format(macro.us10y)+'%','Tasa global alta comprime múltiplos y encarece crédito USD','FALLBACK'],
+                ['Inflación mensual AR',one.format(macro.inflation)+'%','Impacta tasa real, pesos y timing de compra/venta','FALLBACK'],
+                ['Tasa pesos ref.',one.format(macro.pesoRate)+'% TNA','Si supera devaluación esperada, pesos tasa 0 pierde atractivo','FALLBACK'],
+                ['WTI',one.format(macro.wti)+' USD/bbl','Energía afecta fertilizantes, flete y biocombustibles','FALLBACK']
+              ].map(function(r){return h('tr',null,[h('td',null,r[0]),h('td',null,r[1]),h('td',null,r[2]),h('td',null,h(DataBadge,{status:r[3]}))])}))])]),
+              h(Card,null,[h('h3',null,'Lectura ejecutiva'), h('div',{className:'explain'},[
+                h('b',null,'Señal actual: '), rec.fxGap>12?'brecha cambiaria elevada. La decisión de insumo debería separar precio USD de costo financiero en pesos/canje.': 'brecha controlada. La señal de precio relativo pesa más que la macro.',
+                h('br'),h('br'), 'Para una empresa de insumos, el tablero debe cruzar: tipo de cambio de referencia, tasa de financiación, retenciones y relación insumo/grano. Si alguno cambia, el score se recalcula y el reporte deja trazabilidad.'
+              ]), h('div',{style:{height:12}}), h('details',null,[h('summary',null,'¿Cómo se calcula la brecha?'), h('p',{className:'small muted'},'Brecha CCL/Oficial = (CCL - Oficial) / Oficial. Se usa como riesgo de reposición, cobertura y pricing. No decide sola la compra; ajusta confianza.')])])
+            ])
+          ]);
+        }
+        function SectionGrains(){
+          return h(React.Fragment,null,[SectionTitle('grains','Granos & Futuros','Precio no alcanza: la app muestra curvas, basis, relación insumo/grano y qué dato se usó.',[h(Badge,{type:'manual'},'BCR/Matba estructura'),h(Badge,{type:'pending'},'backend recomendado')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Precios y ratios accionables'),h('table',null,[h('thead',null,h('tr',null,['Mercado','Disponible','Futuro','Basis','Fuente'].map(function(x){return h('th',null,x)}))),h('tbody',null,grains.map(function(g){return h('tr',null,[h('td',null,g.crop),h('td',null,money.format(g.price)+' '+g.unit),h('td',null,money.format(g.future)+' '+g.unit),h('td',null,(g.basis>=0?'+':'')+g.basis+' USD/t'),h('td',null,[h(DataBadge,{status:g.status}),h('div',{className:'small muted'},g.source)])])}))])]),
+              h(Card,null,[h('h3',null,'Curva y relación urea/maíz'),h(ChartCard,{data:priceLine,options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#B7C3C5'}}},scales:{x:{ticks:{color:'#8D9BA4'},grid:{color:'rgba(255,255,255,.05)'}},y:{position:'left',ticks:{color:'#8D9BA4'},grid:{color:'rgba(255,255,255,.05)'}},y1:{position:'right',ticks:{color:'#FFD166'},grid:{drawOnChartArea:false}}}}})])
+            ])
+          ]);
+        }
+        function SectionInputs(){
+          return h(React.Fragment,null,[SectionTitle('inputs','Scoring de compra de insumos','La función recomendar() usa los pesos pedidos y muestra cada factor con signo, impacto y explicación.',[h(Badge,{type:'manual'},'precios editables'),h(Badge,{type:'live'},'score recalculado')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Inputs trazables'), h('div',{className:'control-grid'},[
+                control('Urea local USD/t','number',inputs.urea,function(v){setInput('urea',v)}),
+                control('Paridad import. USD/t','number',inputs.parity,function(v){setInput('parity',v)}),
+                control('Maíz USD/t','number',inputs.corn,function(v){setInput('corn',v)}),
+                control('Hist. urea/maíz','number',inputs.histRatio,function(v){setInput('histRatio',v)},'0.01'),
+                select('Tendencia internacional',inputs.trend,function(v){setInput('trend',v)},['alcista','neutra','bajista']),
+                select('Oferta/Demanda',inputs.supply,function(v){setInput('supply',v)},['ajustado','normal','holgado'])
+              ]), h('div',{style:{height:12}}), h('div',{className:'grid three'},[
+                h(Kpi,{label:'Urea usada',value:money.format(inputs.urea)+' USD/t',sub:inputs.ureaSource||'Manual',badge:h(Badge,{type:'manual'},'editable')}),
+                h(Kpi,{label:'Relación actual',value:two.format(rec.ratio),sub:'t maíz / t urea · '+pct(rec.ratioGap)+' vs historia',badge:h(Badge,{type:rec.ratioGap<0?'live':'fallback'},rec.ratioGap<0?'barato':'caro')}),
+                h(Kpi,{label:'Paridad',value:pct(rec.parityGap),sub:'local vs importación',badge:h(Badge,{type:rec.parityGap<0?'live':'fallback'},rec.parityGap<0?'debajo':'arriba')})
+              ])]),
+              h(Card,null,[h('div',{className:'verdict'},[h('div',{className:'label'},'Score recomendar()'),h('div',{className:'v',style:{color:rec.color}},two.format(rec.score)+' · '+rec.verdict),h('div',{className:'meter'},h('span',{style:{width:(rec.score*10)+'%'}})),h('p',{className:'small muted'},'Bonus consistencia: '+(rec.bonus?'+0,6':'0')+' · Penalidad señales negativas: '+two.format(rec.penalty)+' · Ajuste macro: '+two.format(rec.macroAdj))]), h('div',{style:{height:12}}), h('details',null,[h('summary',null,'¿Cómo se calcula el score?'),h('p',{className:'small muted'},'Score = 5 + impactos ponderados. Paridad pesa 1,4; relación insumo/grano 1,3; tendencia internacional 0,85; oferta/demanda 0,9. Si hay 2 o más factores favorables suma +0,6 por consistencia.')])])
+            ]),
+            h('div',{className:'card',style:{marginTop:14}},[h('h3',null,'Tabla de factores — señal, peso e impacto'),h('table',null,[h('thead',null,h('tr',null,['Factor','Signo','Peso','Dato actual','Benchmark','Impacto','Explicación'].map(function(x){return h('th',null,x)}))),h('tbody',null,rec.factors.map(function(f){return h('tr',null,[h('td',null,f.name),h('td',null,h('span',{className:'sign '+(f.sign==='+'?'plus':f.sign==='-'?'minus':'equal')},f.sign)),h('td',null,two.format(f.weight)),h('td',null,f.current),h('td',null,f.bench),h('td',null,(f.impact>=0?'+':'')+two.format(f.impact)),h('td',null,f.why)])}))])])
+          ]);
+        }
+        function SectionNdvi(){
+          return h(React.Fragment,null,[SectionTitle('ndvi','NASA / NDVI / Rinde estimado','La imagen no es el producto: el producto es estimar rinde zonal y detectar anomalías con NDVI/EVI, clima, etapa y suelo.',[h(Badge,{type:'live'},'Open‑Meteo'),h(Badge,{type:'manual'},'NDVI editable'),h(Badge,{type:'pending'},'Powered by NASA')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Campo y fenología'), h('div',{className:'control-grid'},[
+                select('Región',region,setRegion,Object.keys(baseYield)),
+                select('Departamento',department,setDepartment,departments[region]||[]),
+                select('Cultivo',crop,setCrop,Object.keys(THRESHOLDS)),
+                select('Etapa',stage,setStage,Object.keys(THRESHOLDS[crop])),
+                control('Latitud','number',coords.lat,function(v){setCoords(Object.assign({},coords,{lat:Number(v)}))},'0.0001'),
+                control('Longitud','number',coords.lon,function(v){setCoords(Object.assign({},coords,{lon:Number(v)}))},'0.0001'),
+                control('NDVI actual','number',ndvi,setNdvi,'0.01'),
+                control('EVI actual','number',evi,setEvi,'0.01')
+              ]), h('div',{style:{height:12}}),h('div',{className:'badge-row'},[h(Button,{onClick:setGeo},'Usar ubicación'),h(Button,{kind:'primary',onClick:openNasa},'Ver imagen satelital NASA de mi zona'),h(Badge,{type:'pending'},'Powered by NASA')])]),
+              h(Card,null,[h('div',{className:'sat-card'},[h('span',{className:'layer-dot dot1'}),h('span',{className:'layer-dot dot2'}),h('span',{className:'layer-dot dot3'})])])
+            ]),
+            h('div',{className:'grid three',style:{marginTop:14}},[
+              h(Kpi,{label:'NDVI esperado',value:two.format(yieldEst.low)+'–'+two.format(yieldEst.high),sub:crop+' · '+stage+' · '+region,badge:h(Badge,{type:yieldEst.status==='NORMAL'?'live':'fallback'},yieldEst.status)}),
+              h(Kpi,{label:'Anomalía NDVI',value:pct(yieldEst.ndviAnom),sub:yieldEst.main,badge:h(Badge,{type:yieldEst.ndviAnom>=0?'live':'fallback'},yieldEst.ndviAnom>=0?'vigor':'riesgo')}),
+              h(Kpi,{label:'Humedad suelo 3–9 cm',value:two.format(weather.soil9),sub:'Lluvia 30 días '+one.format(weather.rain30)+' mm',badge:h(DataBadge,{status:weather.status})})
+            ]),
+            h('div',{className:'grid two',style:{marginTop:14}},[
+              h(Card,null,[h('h3',null,'Rinde estimado por anomalía'),h(ChartCard,{type:'bar',data:yieldChart}),h('p',{className:'small muted'},'P50 = rinde base zonal × ajustes por NDVI/EVI, lluvia, humedad de suelo, materia orgánica y retenciones. Rango P10/P90 aumenta si hay datos manuales o anomalía fuerte.')]),
+              h(Card,null,[h('h3',null,'Diagnóstico agronómico'),h('table',null,[h('thead',null,h('tr',null,['Componente','Dato','Impacto'].map(function(x){return h('th',null,x)}))),h('tbody',null,[
+                ['Rinde base zonal',one.format(baseYield[region][crop])+' qq/ha','Benchmark '+region+' / '+crop],
+                ['NDVI/EVI',two.format(ndvi)+' / '+two.format(evi),'Anomalía NDVI '+pct(yieldEst.ndviAnom)+' · EVI '+pct(yieldEst.eviAnom)],
+                ['Agua',one.format(weather.rain30)+' mm 30d · suelo '+two.format(weather.soil9),'Score agua '+two.format(yieldEst.rainScore)+' / suelo '+two.format(yieldEst.soilScore)],
+                ['Suelo','MO '+one.format(soilProfiles[region].mo)+'% · pH '+one.format(soilProfiles[region].ph),soilProfiles[region].limit],
+                ['Rinde P50',one.format(yieldEst.p50)+' qq/ha','P10 '+one.format(yieldEst.p10)+' · P90 '+one.format(yieldEst.p90)]
+              ].map(function(r){return h('tr',null,[h('td',null,r[0]),h('td',null,r[1]),h('td',null,r[2])])}))])])
+            ])
+          ]);
+        }
+        function SectionCorrelation(){
+          var labels=['Blue','CCL','Maíz','Soja','Urea','NDVI','Tasa','Margen'];
+          var vals=[[1,.92,.48,.42,.58,-.12,.34,-.28],[.92,1,.51,.49,.63,-.10,.31,-.22],[.48,.51,1,.78,.66,.18,-.24,.35],[.42,.49,.78,1,.52,.16,-.18,.30],[.58,.63,.66,.52,1,-.08,.28,-.46],[-.12,-.10,.18,.16,-.08,1,-.21,.57],[.34,.31,-.24,-.18,.28,-.21,1,-.40],[-.28,-.22,.35,.30,-.46,.57,-.40,1]];
+          var cellColor=function(v){ var a=Math.abs(v); var color=v>=0?'79,224,168':'255,107,107'; return 'rgba('+color+','+(0.13+a*.65)+')'; };
+          return h(React.Fragment,null,[SectionTitle('correlation','Correlaciones y rupturas','Matriz interactiva de pares clave. En HTML puro usa muestra histórica/fallback; productivo requiere backend con 5–10 años limpios.',[h(Badge,{type:'fallback'},'histórico demo'),h(Badge,{type:'pending'},'backend para real')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Heatmap de matriz'),h('div',{className:'heatmap'},[h('div',{className:'heat-row'},[h('div',{className:'heat-label'},''),labels.map(function(l){return h('div',{className:'heat-label',style:{textAlign:'center'}},l)})]),labels.map(function(row,i){return h('div',{className:'heat-row'},[h('div',{className:'heat-label'},row),vals[i].map(function(v,j){return h('div',{className:'heat-cell',title:row+' vs '+labels[j]+': '+two.format(v),style:{background:cellColor(v)}},two.format(v))})])})])]),
+              h(Card,null,[h('h3',null,'Alertas de ruptura'),h('div',{className:'source-list'},[
+                alertItem('Urea vs Maíz','Hist. +0,66 · último +0,18','Ruptura: el insumo dejó de copiar al grano. Priorizar ratio actual y paridad, no precio nominal.'),
+                alertItem('NDVI vs Margen','Hist. +0,57 · último +0,21','El margen hoy depende más de precio/retenciones que de vigor. Cobertura parcial antes de aumentar insumo.'),
+                alertItem('CCL vs Granos','Hist. +0,51 · último +0,74','Mayor dolarización financiera del precio. Mirar brecha y plazos de cobro.')
+              ]),h('details',null,[h('summary',null,'Impacto retenciones y macro'),h('p',{className:'small muted'},'El tablero cruza retenciones con precio disponible/futuro y tipo de cambio. Suba de retenciones reduce precio neto y rinde de indiferencia; tasa alta encarece esperar si el insumo sube más rápido que el grano.')])])
+            ])
+          ]);
+        }
+        function alertItem(a,b,c){return h('div',{className:'source-item'},[h('div',null,[h('b',null,a),h('span',null,b),h('div',{className:'small muted'},c)]),h(Badge,{type:'fallback'},'ALERTA')]);}
+        function SectionSoil(){
+          return h(React.Fragment,null,[SectionTitle('soil','MAGyP & Perfil de suelos','Rinde promedio por cultivo/departamento y perfil de suelo. La V3 muestra trazabilidad y deja estructura lista para dataset MAGyP.',[h(Badge,{type:'pending'},'MAGyP CSV'),h(Badge,{type:'manual'},'perfil editable')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Rinde zonal y departamento'),h('table',null,[h('thead',null,h('tr',null,['Cultivo','Región','Departamento','Rinde base','Fuente'].map(function(x){return h('th',null,x)}))),h('tbody',null,['Maíz','Soja','Trigo'].map(function(c){return h('tr',null,[h('td',null,c),h('td',null,region),h('td',null,department),h('td',null,one.format(baseYield[region][c])+' qq/ha'),h('td',null,[h(Badge,{type:'pending'},'MAGyP'),h('div',{className:'small muted'},'Serie por cultivo, campaña, provincia y departamento')])])}))])]),
+              h(Card,null,[h('h3',null,'Perfil de suelo'),h('div',{className:'control-grid'},[control('Materia orgánica %','number',soilMo,setSoilMo,'0.1'), control('Retenciones %','number',retention,setRetention,'0.1')]),h('div',{style:{height:12}}),h('table',null,[h('tbody',null,[
+                ['Materia orgánica zona',one.format(soilProfiles[region].mo)+'%'],['pH',one.format(soilProfiles[region].ph)],['Fertilidad',soilProfiles[region].fert],['Limitante principal',soilProfiles[region].limit]
+              ].map(function(r){return h('tr',null,[h('td',null,r[0]),h('td',null,r[1])])}))])])
+            ])
+          ]);
+        }
+        function SectionHedge(){
+          return h(React.Fragment,null,[SectionTitle('hedge','Estrategias de cobertura','Recomendaciones por escenario: futuro, opción, canje y cobertura parcial según margen, rinde y macro.',[h(Badge,{type:'manual'},'estrategia'),h(Badge,{type:'pending'},'Matba‑Rofex')]),
+            h('div',{className:'grid three'},[
+              strategy('Margen positivo + rinde normal','Vender 25–40% futuro / forward','Protege margen sin matar upside productivo. Complementar con calls si el mercado está volátil.'),
+              strategy('NDVI bajo + agua justa','Cobertura parcial menor','Evitar sobre-vender producción no asegurada. Priorizar puts o precio mínimo si existe.'),
+              strategy('Insumo caro vs grano','Canje selectivo / esperar escalonado','No cerrar todo el paquete. Comprar necesidades críticas y dejar gatillos por ratio urea/maíz.')
+            ])
+          ]);
+        }
+        function strategy(t,a,b){return h(Card,null,[h('h3',null,t),h('div',{className:'big-num',style:{fontSize:24,color:'var(--mint)'}},a),h('p',{className:'small muted'},b)]);}
+        function SectionWhatif(){
+          return h(React.Fragment,null,[SectionTitle('whatif','What‑If multi-variable','Simula impacto de precio, clima/NDVI, suelos, retenciones e insumos en margen.',[h(Badge,{type:'live'},'recalcula'),h(Badge,{type:margin.margin>0?'live':'fallback'},margin.margin>0?'margen +':'margen -')]),
+            h('div',{className:'grid two'},[
+              h(Card,null,[h('h3',null,'Palancas del margen'),h('div',{className:'control-grid'},[
+                control('Precio USD/t','number',priceScenario,setPriceScenario,'1'), control('Retenciones %','number',retention,setRetention,'0.1'), control('Semilla USD/ha','number',seedCost,setSeedCost,'1'), control('Fertilizante USD/ha','number',fertCost,setFertCost,'1'), control('Otros costos USD/ha','number',otherCost,setOtherCost,'1'), control('NDVI','number',ndvi,setNdvi,'0.01')
+              ]), h('div',{style:{height:14}}),h('div',{className:'grid three'},[
+                h(Kpi,{label:'Ingreso neto',value:money.format(margin.gross)+' USD/ha',sub:'Precio × rinde × retenciones',badge:h(Badge,{type:'manual'},'modelo')}),
+                h(Kpi,{label:'Costo total',value:money.format(margin.costs)+' USD/ha',sub:'Semilla + fert + resto',badge:h(Badge,{type:'manual'},'editable')}),
+                h(Kpi,{label:'Margen',value:money.format(margin.margin)+' USD/ha',sub:'Equilibrio '+one.format(margin.breakeven)+' qq/ha',badge:h(Badge,{type:margin.margin>0?'live':'fallback'},margin.margin>0?'ok':'riesgo')})
+              ])]),
+              h(Card,null,[h('h3',null,'Sensibilidad'),h(ChartCard,{type:'bar',data:marginChart,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#B7C3C5'}}},scales:{x:{ticks:{color:'#8D9BA4'},grid:{display:false}},y:{ticks:{color:'#8D9BA4'},grid:{color:'rgba(255,255,255,.05)'}}}}})])
+            ]),
+            h('div',{className:'card',style:{marginTop:14}},[h('h3',null,'Termómetro de margen'),h('div',{className:'meter',style:{height:18}},h('span',{style:{width:clamp((margin.margin+300)/9,2,100)+'%'}})),h('p',{className:'small muted'},margin.margin>250?'Margen cómodo: se puede fijar parte de precio y asegurar insumos críticos.':margin.margin>0?'Margen positivo pero sensible: cobertura parcial y compra selectiva.':'Margen en riesgo: revisar rinde, precio neto, retenciones y paquete tecnológico.')])
+          ]);
+        }
+        function control(label,type,value,onChange,step){return h('div',null,[h('label',null,label),h('input',{type:type,value:value,step:step||'1',onChange:function(e){onChange(e.target.value)}})]);}
+        function select(label,value,onChange,options){return h('div',null,[h('label',null,label),h('select',{value:value,onChange:function(e){onChange(e.target.value)}},options.map(function(o){return h('option',{value:o},o)}))]);}
+      }
+
+      try{
+        ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+      }catch(e){
+        console.error(e);
+        document.getElementById('root').innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#07090B;color:white;font-family:Inter,system-ui;padding:24px"><div style="max-width:720px;border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:26px;background:rgba(255,255,255,.06)"><h1>Error al montar AgRadar</h1><p style="color:#AAB6BB">'+String(e.message||e)+'</p></div></div>';
+      }
+    })();
+  </script>
+</body>
+</html>
